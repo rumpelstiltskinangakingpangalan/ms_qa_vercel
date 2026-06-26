@@ -78,6 +78,7 @@ export default function Home() {
   // ---- view state ----
   const [currPage, setCurrPage] = useState(0);
   const [buildUpTo, setBuildUpTo] = useState(0); // page indices 0..buildUpTo are mounted
+  const [revealedPages, setRevealedPages] = useState<number[]>([]); // images loaded -> show text
 
   // ---- settings ----
   const [fillerPages, setFillerPages] = useState(true);
@@ -226,22 +227,17 @@ export default function Home() {
   // ===================================================================
   // Progressive page loader (mirrors the original checkPageIfComplete chain):
   // reveal each page's text once its images have loaded, then mount the next.
+  //
+  // Reveal is declarative: a page index is pushed into `revealedPages`, which
+  // stamps `data-revealed="true"` on its container so CSS shows the text. We
+  // must NOT mutate `.textWrapper.style` directly — that lives inside a
+  // dangerouslySetInnerHTML subtree, so the next setBuildUpTo() re-render wipes
+  // the change (only the final page would survive).
   // ===================================================================
   useEffect(() => {
     if (loading || !book || !meta) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
-
-    const reveal = (el: Element, i: number) => {
-      if (i === 0) {
-        el.querySelectorAll("div").forEach((d) => {
-          (d as HTMLElement).style.visibility = "visible";
-        });
-      } else {
-        const tw = el.querySelector(".textWrapper") as HTMLElement | null;
-        if (tw) tw.style.visibility = "visible";
-      }
-    };
 
     const check = () => {
       if (cancelled) return;
@@ -252,6 +248,7 @@ export default function Home() {
       }
 
       // reveal any mounted page (0..buildUpTo) whose images have finished
+      const newlyRevealed: number[] = [];
       for (let i = 0; i <= buildUpTo && i <= meta.max_pages; i++) {
         if (revealedRef.current.has(i)) continue;
         const el = main.children[i];
@@ -259,9 +256,12 @@ export default function Home() {
         const imgs = Array.from(el.querySelectorAll("img"));
         const done = imgs.length > 0 && imgs.every((im) => im.complete);
         if (done) {
-          reveal(el, i);
           revealedRef.current.add(i);
+          newlyRevealed.push(i);
         }
+      }
+      if (newlyRevealed.length) {
+        setRevealedPages((prev) => [...prev, ...newlyRevealed]);
       }
 
       if (revealedRef.current.has(buildUpTo)) {
@@ -1023,7 +1023,11 @@ export default function Home() {
       <main ref={mainRef} onScroll={handleScroll}>
         {ready && (
           <>
-            <div id="divCoverPage" data-page="0">
+            <div
+              id="divCoverPage"
+              data-page="0"
+              data-revealed={revealedPages.includes(0) ? "true" : undefined}
+            >
               <div
                 id="coverBack"
                 dangerouslySetInnerHTML={{ __html: book!.pages.coverBack }}
@@ -1049,6 +1053,7 @@ export default function Home() {
                   data-textposition={tp}
                   data-pagetype={ptype}
                   data-shade="true"
+                  data-revealed={revealedPages.includes(a) ? "true" : undefined}
                   style={{
                     display: hidden ? "none" : undefined,
                     width: collapsed ? "700px" : undefined,
@@ -1143,6 +1148,7 @@ export default function Home() {
             style={{
               width: settingsOpen ? "415px" : undefined,
               borderColor: settingsOpen ? "var(--theme-med)" : undefined,
+              paddingRight: settingsOpen ? "1em" : undefined,
             }}
           >
             <div id="btnSettings" onClick={() => setSettingsOpen((s) => !s)}>

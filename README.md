@@ -67,7 +67,7 @@ book is selected by the `BOOK_ID` constant in `app/page.tsx`.
    git add .
    git commit -m "Initial commit"
    git branch -M main
-   git remote add origin https://github.com/<you>/ms_qa_vercel.git
+   git remote add origin https://github.com/Ozydeus/ms_qa_vercel.git
    git push -u origin main
    ```
 

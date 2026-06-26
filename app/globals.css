@@ -384,6 +384,18 @@ main {
   visibility: hidden;
 }
 
+/* progressive loader stamps data-revealed="true" once a page's images finish;
+   show the text declaratively so React re-renders can't clobber it */
+.divRegularPage[data-revealed="true"] .textWrapper {
+  visibility: visible;
+}
+
+/* cover page text/overlay divs carry inline visibility:hidden, so !important
+   is required to reveal them once the cover's images have loaded */
+#divCoverPage[data-revealed="true"] div {
+  visibility: visible !important;
+}
+
 .textGradient {
   width: 100%;
   height: 100%;
@@ -632,7 +644,10 @@ footer {
   filter: brightness(110%);
 }
 
-#btnApprove div {
+/* exclude the hotkey badge: it is a child <div> of #btnApprove, so an
+   unscoped `#btnApprove div` would out-specify `.hotkey { display: none }`
+   and force the Ctrl+Enter badge to show even when HOTKEYS is off */
+#btnApprove div:not(.hotkey) {
   width: auto;
   height: calc(var(--unit1) * 4);
   margin: auto;
@@ -640,12 +655,22 @@ footer {
   gap: var(--unit2);
 }
 
-#btnApprove div h1 {
+#btnApprove div:not(.hotkey) h1 {
+  margin: auto;
+  cursor: pointer;
+}
+
+#btnApprove div:not(.hotkey) svg {
   margin: auto;
 }
 
-#btnApprove div svg {
-  margin: auto;
+/* the approve badge reads "Ctrl + Enter", far wider than the single-char
+   badges, so it must size to its content instead of the fixed 16px .hotkey
+   width (otherwise the text overflows the box). matches the prototype, which
+   relies on the wider padding-left/right:8px to breathe. */
+#btnApprove .hotkey {
+  width: auto;
+  white-space: nowrap;
 }
 
 .optSettings {
