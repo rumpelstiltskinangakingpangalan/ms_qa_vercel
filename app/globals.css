@@ -600,6 +600,12 @@ footer {
   background: var(--theme-light);
 }
 
+/* hover-brighten only a non-favorite star (favorites stay solid yellow),
+   matching the original pointerover: filter brightness(500%) on #333333 */
+#btnStar[data-fav="false"]:hover svg path {
+  filter: brightness(500%);
+}
+
 .btnTools svg {
   margin: auto;
 }

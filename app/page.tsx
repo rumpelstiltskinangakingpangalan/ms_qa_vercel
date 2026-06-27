@@ -1243,6 +1243,7 @@ export default function Home() {
           >
             <div
               id="btnStar"
+              data-fav={isFav(currPage) ? "true" : "false"}
               onClick={(e) => {
                 e.stopPropagation();
                 updateFavorites();
